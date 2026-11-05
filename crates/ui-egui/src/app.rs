@@ -9,10 +9,10 @@ use super::state::{
     QueuedScreenshot, SCREENSHOT_SETTLE_FRAMES, SCREENSHOT_TIMEOUT_ERROR, SCREENSHOT_TIMEOUT_MS, SYSTEM_CLIPBOARD_POLL, take_frame_once,
 };
 use super::{
-    Arc, AutomationRoots, ControlRequest, Ordering, Receiver, Session, UiState, Value, VectorcraftApp, View, ViewInfo, background, canvas, chrome,
-    clipboard_probe, dialogs, export_progress, file_access, fileio, font_menu, graphics, i18n, io, json, menus, native_menu, opening, palette,
-    panel_docking, panels, picks, place, placing, plugin_runs, prefs_dialog, recovery, screen_color, scrub, shortcut_editor, shortcuts, theme,
-    titlebar, toolbar, tools_float, trace_runs, unsaved, updates_ui, widgets,
+    Arc, AutomationRoots, ControlRequest, Ordering, Receiver, Session, UiState, Value, VectorcraftApp, View, ViewInfo, assistant, background, canvas,
+    chrome, clipboard_probe, dialogs, export_progress, file_access, fileio, font_menu, graphics, i18n, io, json, menus, native_menu, opening,
+    palette, panel_docking, panels, picks, place, placing, plugin_runs, prefs_dialog, recovery, screen_color, scrub, shortcut_editor, shortcuts,
+    theme, titlebar, toolbar, tools_float, trace_runs, unsaved, updates_ui, widgets,
 };
 
 mod clipboard;
@@ -62,6 +62,7 @@ impl VectorcraftApp {
             views,
             view_uids,
             services,
+            assistant: assistant::State::default(),
             canvas: CanvasCache {
                 renderer: vectorcraft_render::Renderer::new(),
                 texture: None,
@@ -105,7 +106,6 @@ impl VectorcraftApp {
             pending_url: None,
             control_rx: None,
             deferred_control: None,
-            synthetic_dropped_before: 0,
             pending_screenshots: vec![],
             queued_screenshots: vec![],
             screenshot_token: 0,
@@ -362,6 +362,7 @@ impl VectorcraftApp {
         crate::chrome::sync_window_title(self, ctx);
         crate::chrome::sync_fullscreen(self, ctx);
         self.drain_control(ctx);
+        assistant::drain(self, ctx);
         // An egui `PasteImage` with a rich system clipboard: run the paste command now, once. It
         // goes through `run`, whose `edit.paste` branch calls `adopt_system_clipboard` (which clears
         // the request) to read the formats and then pastes them. A text paste in the same UI pass
