@@ -306,7 +306,17 @@ pub(crate) fn services(parent: Parent, ui: egui::Context) -> Services {
     let (p1, p2, p3, p4, p5) = (parent.clone(), parent.clone(), parent.clone(), parent.clone(), parent);
     #[cfg(target_os = "macos")]
     let sampled_ui = ui.clone();
+    let using_codex = crate::codex_bridge::available();
+    let (assistant_send, assistant_inbox) = if using_codex {
+        let (send, inbox) = crate::codex_bridge::transport(&ui);
+        (Some(send), Some(inbox))
+    } else {
+        (None, None)
+    };
     Services {
+        assistant_send,
+        assistant_inbox,
+        assistant_label: Some(if using_codex { "Codex local".into() } else { "Codex local · not found".into() }),
         pick_open: Some(Box::new(move |pick: &FilePick| pick_now(PickRequest::Open(pick.clone()), &p1).into_iter().next())),
         pick_open_multi: Some(Box::new(move || pick_now(PickRequest::OpenMany, &p2))),
         pick_save: Some(Box::new(move |pick: &FilePick| pick_now(PickRequest::Save(pick.clone()), &p3).into_iter().next())),
