@@ -21,6 +21,7 @@
 mod automation_args;
 mod caps_lock;
 mod clipboard;
+mod codex_bridge;
 #[cfg(feature = "wgpu")]
 mod compositor_gpu;
 mod control_server;
@@ -45,6 +46,7 @@ mod mac_tablet;
 mod mac_window;
 #[cfg(target_os = "macos")]
 mod open_documents;
+mod openai;
 #[cfg(any(target_os = "linux", target_os = "freebsd", target_os = "dragonfly", target_os = "netbsd", target_os = "openbsd", test))]
 mod portal_save;
 mod prefs_dir;
