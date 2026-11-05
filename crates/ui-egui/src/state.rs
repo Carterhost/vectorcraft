@@ -163,6 +163,7 @@ pub fn rail_panel(id: &str) -> Option<(&'static str, &'static str, &'static str)
 
 /// Panels that live as collapsed icons in the dock (Essentials Classic).
 pub const ICON_PANELS: &[(&str, &str, &str)] = &[
+    ("assistant", "AI Assistant", "wand-sparkles"),
     ("color", "Color", "palette"),
     ("colorGuide", "Color Guide", "dc-color-guide"),
     ("swatches", "Swatches", "swatch-book"),
