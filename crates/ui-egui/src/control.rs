@@ -34,7 +34,7 @@
 //!   Background Save or Background Export on. A `wait` other than true, false or null is refused
 
 use std::sync::Arc;
-use std::sync::atomic::{AtomicU8, AtomicU64, Ordering};
+use std::sync::atomic::{AtomicU8, Ordering};
 use std::sync::mpsc::Sender;
 
 use serde_json::{Value, json};
@@ -101,12 +101,7 @@ pub struct ControlRequest {
     pub params: Value,
     pub reply: Sender<ControlResponse>,
     state: Arc<AtomicU8>,
-    /// Its place in the order requests were made ([`ControlRequest::next_seq`]).
-    seq: u64,
 }
-
-/// The sequence number of the next request made.
-static NEXT_SEQ: AtomicU64 = AtomicU64::new(0);
 
 /// A request's state: waiting to run, taken by the app ([`ControlRequest::claim`]), or given up
 /// by its caller before that ([`Ticket::give_up`]). It leaves `QUEUED` once, one way or the other.
@@ -129,28 +124,12 @@ impl Ticket {
 impl ControlRequest {
     pub fn new(method: impl Into<String>, params: Value) -> (Self, std::sync::mpsc::Receiver<ControlResponse>) {
         let (tx, rx) = std::sync::mpsc::channel();
-        let seq = NEXT_SEQ.fetch_add(1, Ordering::SeqCst);
-        (Self { method: method.into(), params, reply: tx, state: Arc::new(AtomicU8::new(QUEUED)), seq }, rx)
-    }
-
-    /// The sequence number the next request made gets: every request made so far is before it.
-    pub fn next_seq() -> u64 {
-        NEXT_SEQ.load(Ordering::SeqCst)
-    }
-
-    /// Whether this request was made before the one numbered `seq`.
-    pub fn made_before(&self, seq: u64) -> bool {
-        self.seq < seq
+        (Self { method: method.into(), params, reply: tx, state: Arc::new(AtomicU8::new(QUEUED)) }, rx)
     }
 
     /// The caller's handle on this request, to give it up with.
     pub fn ticket(&self) -> Ticket {
         Ticket(self.state.clone())
-    }
-
-    /// Whether its caller gave it up (it never runs), without taking it.
-    pub fn given_up(&self) -> bool {
-        self.state.load(Ordering::SeqCst) == GIVEN_UP
     }
 
     /// Take the request to run it → `false` when its caller gave it up meanwhile (don't run it).
@@ -281,6 +260,12 @@ pub fn handle(app: &mut VectorcraftApp, ctx: &egui::Context, req: &ControlReques
     let p = &req.params;
     let s = |k: &str| p.get(k).and_then(Value::as_str);
     match req.method.as_str() {
+        "assistant.inspect" => ok(crate::assistant::inspect(app)),
+        "assistant.status" => ok(crate::assistant::external_status(app)),
+        "assistant.prompt" => {
+            let Some(prompt) = s("prompt").filter(|prompt| !prompt.trim().is_empty()) else { return err("missing `prompt`") };
+            wrap(crate::assistant::submit_external(app, prompt.to_string()).map(|request_id| json!({"requestId": request_id})))
+        }
         "engine.execute" | "ui.menu.invoke" | "command" => {
             let Some(id) = s("command").or(s("id")) else { return err("missing `command`") };
             let params = p.get("params").cloned().unwrap_or(json!({}));
