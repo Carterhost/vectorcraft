@@ -140,6 +140,7 @@ pub(crate) fn selection_len(app: &VectorcraftApp) -> usize {
 
 pub fn show_icon_panel(app: &mut VectorcraftApp, ui: &mut Ui, id: &str) {
     match id {
+        "assistant" => crate::assistant::show(app, ui),
         "swatches" => swatches::show(app, ui),
         "color" => color::show(app, ui),
         "colorGuide" => color_guide::show(app, ui),
