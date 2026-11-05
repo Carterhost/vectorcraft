@@ -629,6 +629,7 @@ pub fn menu_tree_named(english_names: bool) -> Vec<(&'static str, Vec<Item>)> {
             ];
             let lang = crate::i18n::current();
             let mut panels = vec![
+                panel("AI Assistant", "assistant"),
                 panel("Actions", "actions"),
                 panel("Align", "align"),
                 panel("Appearance", "appearance"),
