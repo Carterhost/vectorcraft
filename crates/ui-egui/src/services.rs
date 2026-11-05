@@ -1,3 +1,4 @@
+use super::assistant::{Inbox as AssistantInbox, SendFn as AssistantSendFn};
 use super::{Arc, ClipboardProbeFactory, Mutex, SystemClipboard, background, native_menu, picks, place, print, screen_color, stylus};
 
 /// A file type a dialog filters by: its label, which shows translated, and its extensions without
@@ -71,6 +72,12 @@ pub type OpenInFn = Box<dyn FnMut(&str) -> Result<bool, String>>;
 /// Platform services injected by the host app (desktop or web).
 #[derive(Default)]
 pub struct Services {
+    /// Native/local AI Assistant transport supplied by the desktop host.
+    pub assistant_send: Option<AssistantSendFn>,
+    /// Responses from the assistant transport, drained on the UI thread.
+    pub assistant_inbox: Option<AssistantInbox>,
+    /// Human-readable name of the active assistant runtime.
+    pub assistant_label: Option<String>,
     /// Show an open dialog; returns a path.
     pub pick_open: Option<PickOpen>,
     /// Show a save dialog (suggested name, folder, file types); returns a path.
