@@ -23,6 +23,7 @@ macro_rules! tl {
 }
 
 pub mod addons;
+pub mod assistant;
 pub mod background;
 mod brand;
 pub mod canvas;
@@ -131,6 +132,8 @@ pub struct VectorcraftApp {
     /// `document.move` reorders them (#5663).
     pub(crate) view_uids: Vec<u64>,
     pub services: Services,
+    /// The live, non-persisted AI Assistant conversation for this app session.
+    pub assistant: assistant::State,
     pub canvas: CanvasCache,
     pub perf: Perf,
     /// Docking state that lives for the session only.
@@ -154,10 +157,6 @@ pub struct VectorcraftApp {
     /// A `ui.pointer` request taken from the channel while synthetic input sent before it was not
     /// yet applied: it runs, ahead of the channel, on the first frame after that input is applied.
     deferred_control: Option<ControlRequest>,
-    /// When synthetic input was last dropped before a UI pass took it, the sequence number of the
-    /// next control request ([`ControlRequest::next_seq`]): a `ui.pointer` request made before it
-    /// came after that input and is answered with an error.
-    synthetic_dropped_before: u64,
     /// Window captures asked for and not answered yet.
     pending_screenshots: Vec<PendingScreenshot>,
     /// Admitted captures whose settled frame has not come yet (issued one at a time).
