@@ -50,7 +50,7 @@ pub(crate) fn parse_model_text(id: u64, text: &str) -> Result<Response, String> 
             let params = command_object
                 .get("params")
                 .or_else(|| command_object.get("arguments"))
-                .filter(Value::is_object)
+                .filter(|value| value.as_object().is_some())
                 .cloned()
                 .unwrap_or_else(|| json!({}));
             let description =
